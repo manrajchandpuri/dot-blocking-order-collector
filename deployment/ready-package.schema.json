@@ -1,0 +1,194 @@
+{
+  "type": "object",
+  "required": [
+    "schema_version",
+    "status",
+    "period",
+    "label",
+    "package_key",
+    "revision",
+    "created_at",
+    "order_count",
+    "url_count",
+    "folder_url",
+    "run_url",
+    "files"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "enum": [
+        1
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Ready"
+      ]
+    },
+    "period": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+    },
+    "label": {
+      "type": "string"
+    },
+    "package_key": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[a-f0-9]{64}$"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "order_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "url_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "folder_url": {
+      "type": "string",
+      "pattern": "^https://"
+    },
+    "run_url": {
+      "type": "string"
+    },
+    "files": {
+      "type": "object",
+      "required": [
+        "zip",
+        "docx",
+        "qa_csv",
+        "qa_html"
+      ],
+      "properties": {
+        "zip": {
+          "type": "object",
+          "required": [
+            "name",
+            "size",
+            "sha256",
+            "web_url",
+            "item_id"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "web_url": {
+              "type": "string",
+              "pattern": "^https://"
+            },
+            "item_id": {
+              "type": "string"
+            }
+          }
+        },
+        "docx": {
+          "type": "object",
+          "required": [
+            "name",
+            "size",
+            "sha256",
+            "web_url",
+            "item_id"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "web_url": {
+              "type": "string",
+              "pattern": "^https://"
+            },
+            "item_id": {
+              "type": "string"
+            }
+          }
+        },
+        "qa_csv": {
+          "type": "object",
+          "required": [
+            "name",
+            "size",
+            "sha256",
+            "web_url",
+            "item_id"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "web_url": {
+              "type": "string",
+              "pattern": "^https://"
+            },
+            "item_id": {
+              "type": "string"
+            }
+          }
+        },
+        "qa_html": {
+          "type": "object",
+          "required": [
+            "name",
+            "size",
+            "sha256",
+            "web_url",
+            "item_id"
+          ],
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "web_url": {
+              "type": "string",
+              "pattern": "^https://"
+            },
+            "item_id": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

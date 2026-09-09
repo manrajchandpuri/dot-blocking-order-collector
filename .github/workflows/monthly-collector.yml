@@ -1,0 +1,93 @@
+name: Monthly DoT collector
+
+on:
+  schedule:
+    - cron: '47 3 5 * *' # 09:17 India time, fifth day each month (UTC schedule)
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'Reporting month YYYY-MM; leave blank for previous month'
+        required: false
+        type: string
+      publish:
+        description: 'Publish passing outputs to SharePoint (Power Automate may email them)'
+        default: false
+        type: boolean
+      revision:
+        description: 'Use original unless deliberately reissuing a package'
+        default: original
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dot-collector-publication
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: github.event_name == 'workflow_dispatch' || vars.AUTOMATION_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    environment: microsoft-production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PYTHONPATH: src
+      PYTHONUNBUFFERED: '1'
+      DOTBO_WORKSPACE: ${{ runner.temp }}/dotbo-workspace
+      TARGET_MONTH: ${{ inputs.month }}
+      REVISION: ${{ inputs.revision || 'original' }}
+      PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
+      PUBLISH_ENABLED: ${{ vars.PUBLISH_ENABLED }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      SHAREPOINT_DRIVE_ID: ${{ vars.SHAREPOINT_DRIVE_ID }}
+      SHAREPOINT_ROOT_FOLDER_ID: ${{ vars.SHAREPOINT_ROOT_FOLDER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Python and OCR dependencies
+        run: |
+          python -m pip install -r requirements-automation.txt
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr tesseract-ocr-eng
+          tesseract --version
+      - name: Collect, check and optionally publish
+        shell: bash
+        run: |
+          args=(--month "$TARGET_MONTH" --output output --revision "$REVISION")
+          if [[ "$PUBLISH" == "true" ]]; then
+            if [[ "$PUBLISH_ENABLED" != "true" ]]; then
+              echo "Publication requested but PUBLISH_ENABLED is not true. Enable it after Microsoft setup."
+              exit 1
+            fi
+            args+=(--publish)
+          fi
+          python -m dotbo.automation "${args[@]}"
+      - name: Save outputs and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dot-collector-${{ github.run_id }}-${{ github.run_attempt }}
+          path: output/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 0
+      - name: Show result in Actions
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f output/run-summary.json ]]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat output/run-summary.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No result summary was produced. Inspect the failed setup step.' >> "$GITHUB_STEP_SUMMARY"
+          fi

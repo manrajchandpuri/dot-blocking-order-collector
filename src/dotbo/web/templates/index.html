@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DoT Blocking Order Collector</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+
+<header class="masthead">
+  <h1>DoT Blocking Order Collector</h1>
+  <p class="standfirst">
+    Blocking instructions issued to Internet Service Licensees under court orders,
+    collected from the Department of Telecommunications, named to the standard
+    convention, and consolidated into a single Word document.
+  </p>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab is-current" role="tab" data-panel="build">Build</button>
+  <button class="tab" role="tab" data-panel="archive">Archive</button>
+  <button class="tab" role="tab" data-panel="search">Search</button>
+</nav>
+
+<!-- ---------------------------------------------------------------- build -->
+<main id="panel-build" class="panel is-current">
+
+  <form id="build-form" class="controls">
+    <div class="field">
+      <label for="month">Month</label>
+      <select id="month" name="month"></select>
+    </div>
+    <div class="field">
+      <label for="year">Year</label>
+      <input type="number" id="year" name="year" min="2023" max="2030" step="1">
+    </div>
+    <div class="field field--wide">
+      <label for="output">Save to</label>
+      <input type="text" id="output" name="output" spellcheck="false">
+    </div>
+  </form>
+
+  <details class="advanced">
+    <summary>Advanced</summary>
+    <div class="advanced__body">
+      <label class="check"><input type="checkbox" id="use-ocr" checked> Read scanned pages with OCR</label>
+      <label class="check"><input type="checkbox" id="redownload"> Ignore cached PDFs and download again</label>
+      <label class="check"><input type="checkbox" id="refresh-index"> Re-read every order's details</label>
+      <div class="field">
+        <label for="days">Only these dates <span class="hint">comma separated, blank for the whole month</span></label>
+        <input type="text" id="days" placeholder="5, 7, 14" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="lookahead">Publication look-ahead <span class="hint">days past the month end</span></label>
+        <input type="number" id="lookahead" value="31" min="7" max="60">
+      </div>
+      <p id="ocr-status" class="note"></p>
+    </div>
+  </details>
+
+  <button id="build" class="action">Build</button>
+
+  <section id="progress" class="progress" hidden>
+    <div class="progress__head">
+      <span id="progress-detail">Starting</span>
+      <span id="progress-pct" class="num">0%</span>
+    </div>
+    <div class="bar"><div id="bar-fill" class="bar__fill"></div></div>
+    <ol id="stages" class="stages"></ol>
+    <p id="progress-message" class="note"></p>
+    <table id="live" class="table table--live" hidden>
+      <thead><tr><th>No.</th><th>File</th><th class="num">URLs</th><th class="num">Declared</th><th>Verified by</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section id="result" class="result" hidden>
+    <p id="result-line" class="result__line"></p>
+    <dl class="figures">
+      <div><dt>Orders</dt><dd id="fig-orders" class="num">0</dd></div>
+      <div><dt>URLs extracted</dt><dd id="fig-urls" class="num">0</dd></div>
+      <div><dt>Counts verified</dt><dd id="fig-verified" class="num">0</dd></div>
+    </dl>
+    <div id="downloads" class="downloads"></div>
+    <p id="written-to" class="note"></p>
+    <h2 class="rule">Orders</h2>
+    <div class="scroll">
+      <table id="orders" class="table">
+        <thead><tr>
+          <th>No.</th><th>File</th><th>Date</th><th>Case</th><th>Action</th>
+          <th class="num">URLs</th><th class="num">Declared</th><th>Verified by</th><th>OCR</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p id="build-error" class="error" hidden></p>
+</main>
+
+<!-- -------------------------------------------------------------- archive -->
+<section id="panel-archive" class="panel">
+  <p class="lede">
+    Every month you have built is kept here. The Word document and QA report are
+    stored as they were; the ZIP is rebuilt from the cached PDFs when you ask for
+    it, so the archive stays small.
+  </p>
+  <div class="scroll">
+    <table id="library" class="table">
+      <thead><tr>
+        <th>Compilation</th><th class="num">Orders</th><th class="num">URLs</th>
+        <th class="num">Verified</th><th>Built</th><th>Files</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <p id="library-empty" class="note" hidden>Nothing built yet.</p>
+
+  <h2 class="rule">Back-catalogue</h2>
+  <p class="lede">
+    Build every month DoT has published, oldest first, skipping any already here.
+    It works month by month and can be stopped at any point; what is finished
+    stays finished. Expect a couple of hours and around 1.8&nbsp;GB of PDFs the
+    first time.
+  </p>
+  <p id="backfill-pending" class="note"></p>
+  <div class="row">
+    <button id="backfill" class="action action--quiet">Build back-catalogue</button>
+    <button id="backfill-stop" class="action action--quiet" hidden>Stop</button>
+  </div>
+  <section id="backfill-progress" class="progress" hidden>
+    <div class="progress__head">
+      <span id="backfill-detail">Preparing</span>
+      <span id="backfill-pct" class="num">0%</span>
+    </div>
+    <div class="bar"><div id="backfill-fill" class="bar__fill"></div></div>
+    <p id="backfill-message" class="note"></p>
+  </section>
+</section>
+
+<!-- --------------------------------------------------------------- search -->
+<section id="panel-search" class="panel">
+  <form id="search-form" class="search">
+    <input type="search" id="q" placeholder="vegamovies" spellcheck="false" autocomplete="off">
+    <button class="action" type="submit">Search</button>
+  </form>
+  <p id="search-scope" class="note"></p>
+
+  <details class="advanced">
+    <summary>Query syntax</summary>
+    <table class="table table--syntax">
+      <tbody>
+        <tr><td class="mono">vegamovies</td><td>anywhere &mdash; title, case, court, party or blocked URL</td></tr>
+        <tr><td class="mono">url:vegamovies</td><td>blocked URLs only</td></tr>
+        <tr><td class="mono">case:"CS(COMM) 331"</td><td>case number, punctuation ignored</td></tr>
+        <tr><td class="mono">court:delhi</td><td>court</td></tr>
+        <tr><td class="mono">party:fabindia</td><td>the parties named in the subject</td></tr>
+        <tr><td class="mono">date:2026-08</td><td>a month, a year, a day, or 2026-08-05..2026-08-31</td></tr>
+        <tr><td class="mono">action:unblock</td><td>unblocking instructions</td></tr>
+        <tr><td class="mono">month:2026-08</td><td>orders in one compilation</td></tr>
+        <tr><td class="mono">order:9</td><td>the ninth order of its compilation</td></tr>
+      </tbody>
+    </table>
+  </details>
+
+  <div id="search-results" class="results"></div>
+</section>
+
+<footer class="colophon">
+  <p>Set in Source Serif&nbsp;4, Inter and JetBrains Mono, bundled under the SIL Open Font Licence.</p>
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

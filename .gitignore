@@ -1,0 +1,12 @@
+.venv/
+workspace/
+__pycache__/
+*.pyc
+.DS_Store
+output/
+dist/
+.pytest_cache/
+.env
+.env.*
+*.pem
+*.key

@@ -1,0 +1,24 @@
+name: Tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      DOTBO_SKIP_NETWORK: '1'
+      DOTBO_SKIP_SLOW: '1'
+      DOTBO_WORKSPACE: ${{ runner.temp }}/dotbo-tests
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements-automation.txt pytest==9.1.1
+      - run: python -m pytest tests -q
