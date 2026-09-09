@@ -37,7 +37,7 @@ jobs:
     env:
       PYTHONPATH: src
       PYTHONUNBUFFERED: '1'
-      DOTBO_WORKSPACE: ${{ runner.temp }}/dotbo-workspace
+      DOTBO_WORKSPACE: ${{ github.workspace }}/workspace
       TARGET_MONTH: ${{ inputs.month }}
       REVISION: ${{ inputs.revision || 'original' }}
       PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}

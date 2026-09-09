@@ -12,7 +12,7 @@ jobs:
     env:
       DOTBO_SKIP_NETWORK: '1'
       DOTBO_SKIP_SLOW: '1'
-      DOTBO_WORKSPACE: ${{ runner.temp }}/dotbo-tests
+      DOTBO_WORKSPACE: ${{ github.workspace }}/workspace
     steps:
       - uses: actions/checkout@v4
         with:
