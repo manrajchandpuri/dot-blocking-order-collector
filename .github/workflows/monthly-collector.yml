@@ -10,7 +10,7 @@ on:
         required: false
         type: string
       publish:
-        description: 'Publish passing outputs to SharePoint (Power Automate may email them)'
+        description: 'Release passing outputs for Power Automate delivery'
         default: false
         type: boolean
       revision:
@@ -19,7 +19,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: dot-collector-publication
@@ -30,22 +30,16 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || vars.AUTOMATION_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 240
-    environment: microsoft-production
     permissions:
-      contents: read
-      id-token: write
+      contents: write
     env:
       PYTHONPATH: src
       PYTHONUNBUFFERED: '1'
       DOTBO_WORKSPACE: ${{ github.workspace }}/workspace
       TARGET_MONTH: ${{ inputs.month }}
       REVISION: ${{ inputs.revision || 'original' }}
-      PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
-      PUBLISH_ENABLED: ${{ vars.PUBLISH_ENABLED }}
-      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      SHAREPOINT_DRIVE_ID: ${{ vars.SHAREPOINT_DRIVE_ID }}
-      SHAREPOINT_ROOT_FOLDER_ID: ${{ vars.SHAREPOINT_ROOT_FOLDER_ID }}
+      RELEASE_REQUESTED: ${{ github.event_name == 'schedule' || inputs.publish }}
+      GITHUB_DELIVERY_ENABLED: ${{ vars.GITHUB_DELIVERY_ENABLED }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,17 +53,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y tesseract-ocr tesseract-ocr-eng
           tesseract --version
-      - name: Collect, check and optionally publish
+      - name: Collect and check
         shell: bash
         run: |
           args=(--month "$TARGET_MONTH" --output output --revision "$REVISION")
-          if [[ "$PUBLISH" == "true" ]]; then
-            if [[ "$PUBLISH_ENABLED" != "true" ]]; then
-              echo "Publication requested but PUBLISH_ENABLED is not true. Enable it after Microsoft setup."
-              exit 1
-            fi
-            args+=(--publish)
-          fi
           python -m dotbo.automation "${args[@]}"
       - name: Save outputs and diagnostics
         if: always()
@@ -80,6 +67,54 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           compression-level: 0
+      - name: Check out private delivery branch
+        if: success() && env.RELEASE_REQUESTED == 'true' && env.GITHUB_DELIVERY_ENABLED == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: automation-output
+          path: delivery-branch
+          fetch-depth: 1
+      - name: Release package for Power Automate
+        if: success() && env.RELEASE_REQUESTED == 'true' && env.GITHUB_DELIVERY_ENABLED == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          period="$(python -c 'import json; print(json.load(open("output/package.json"))["period"])')"
+          target="delivery-branch/delivery/${period}"
+          current="delivery-branch/delivery/current"
+          rm -rf "$target"
+          rm -rf "$current"
+          mkdir -p "$target"
+          mkdir -p "$current"
+          cp output/package.json "$target/ready.json"
+          cp output/package.json "$current/ready.json"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          manifest = json.loads(Path("output/package.json").read_text(encoding="utf-8"))
+          target = Path("delivery-branch/delivery") / manifest["period"]
+          for file in manifest["files"].values():
+              source = Path("output") / file["name"]
+              if not source.is_file():
+                  raise SystemExit(f"Required delivery file is missing: {source}")
+              (target / source.name).write_bytes(source.read_bytes())
+              (Path("delivery-branch/delivery/current") / source.name).write_bytes(source.read_bytes())
+          PY
+          cd delivery-branch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --force "delivery/${period}" delivery/current
+          if git diff --cached --quiet; then
+            echo "No changed package content to release for ${period}."
+          else
+            git commit -m "Release DoT package ${period}"
+            git push origin automation-output
+          fi
+      - name: Explain skipped release
+        if: success() && env.RELEASE_REQUESTED == 'true' && env.GITHUB_DELIVERY_ENABLED != 'true'
+        shell: bash
+        run: |
+          echo 'Package passed validation but was not released. Set GITHUB_DELIVERY_ENABLED=true only after Power Automate has been tested.' >> "$GITHUB_STEP_SUMMARY"
       - name: Show result in Actions
         if: always()
         shell: bash
