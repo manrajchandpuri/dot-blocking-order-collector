@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "status": "Ready",
+  "period": "2026-08",
+  "label": "August 2026",
+  "package_key": "2026-08-5a5e746872ffa4f35a3c7c643b5a6e5656d1c370aca6a6c61936145248335a3e",
+  "revision": "original",
+  "created_at": "2026-09-10T12:24:57.528853+00:00",
+  "order_count": 22,
+  "url_count": 1376,
+  "run_url": "https://github.com/manrajchandpuri/dot-blocking-order-collector/actions/runs/34475652204",
+  "commit": "cabe35224c64617d0805745373ad30faf82678f7",
+  "files": {
+    "zip": {
+      "name": "Blocking Orders_August 2026.zip",
+      "size": 78531570,
+      "sha256": "580a8426740b3d60255c80ea37ae6c471bed939fedc67dcb7a7c94c7eca1b7d2"
+    },
+    "docx": {
+      "name": "Blocking Orders_August 2026.docx",
+      "size": 72780,
+      "sha256": "560e27549797ecb2ed7dedd27e2da8e13885cc36519fd383eea402b218c820f9"
+    },
+    "qa_csv": {
+      "name": "Blocking Orders_August 2026 - QA report.csv",
+      "size": 6871,
+      "sha256": "56d88bd7a30e7f964d0ef8542ec73be49f1e568785f9982435d241ffd06eaa42"
+    },
+    "qa_html": {
+      "name": "Blocking Orders_August 2026 - QA report.html",
+      "size": 9623,
+      "sha256": "026ca3d0088d23f310582b24670d15d33e52c8cf17a4c4636bedbb42f0bccf93"
+    }
+  }
+}
