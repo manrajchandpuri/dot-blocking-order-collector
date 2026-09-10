@@ -98,8 +98,11 @@ def discover(options: RunOptions, on_progress=None) -> tuple[list[Order], list[t
             skipped.append((att, f"could not read PDF: {exc}"))
             continue
         order = Order(attachment=att, pdf_path=str(result), letter=letter)
-        if options.strict_collection and not letter.order_date:
-            skipped.append((att, "covering-letter date could not be established"))
+        # A scanned or malformed covering letter can defeat OCR.  The catalogue
+        # title/date is the documented fallback used by Order.order_date; reject
+        # only when neither source can establish the reporting month.
+        if options.strict_collection and not order.order_date:
+            skipped.append((att, "order date could not be established from the PDF or catalogue metadata"))
             continue
         if in_scope(order.order_date, options.year, options.month, options.days):
             orders.append(order)

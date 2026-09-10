@@ -159,6 +159,24 @@ def test_strict_catalogue_does_not_hide_attachment_failure(monkeypatch):
         catalog.page_attachments(ListingPage(1, "page"), refresh=True)
 
 
+def test_strict_collection_accepts_catalogue_date_when_a_scanned_letter_has_none(tmp_path, monkeypatch):
+    """A title/published fallback remains a valid date source in unattended runs."""
+    from dotbo.config import RunOptions
+    from dotbo.naming import Order
+    from dotbo.catalog import Attachment
+    import dotbo.pipeline as pipeline
+
+    att = Attachment(81855, 1, 1, title="Blocking order dated 05.08.2026", pdf_url="https://example.test/a.pdf")
+    monkeypatch.setattr(pipeline.Catalog, "candidates_for_month", lambda *_a, **_k: [att])
+    monkeypatch.setattr(pipeline.fetch, "download_all", lambda *_a, **_k: {81855: tmp_path / "81855.pdf"})
+    (tmp_path / "81855.pdf").write_bytes(b"pdf")
+    monkeypatch.setattr(pipeline, "_read_letter", lambda *_a: NS(order_date=None))
+    orders, skipped = pipeline.discover(RunOptions(year=2026, month=8, strict_collection=True))
+    assert not skipped
+    assert len(orders) == 1
+    assert orders[0].order_date == dt.date(2026, 8, 5)
+
+
 def test_preview_and_release_failure_never_upload(tmp_path, monkeypatch):
     r = result(tmp_path)
     monkeypatch.setattr(automation, "engine_status", lambda: ("tesseract", "ok"))
