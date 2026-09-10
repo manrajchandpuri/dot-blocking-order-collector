@@ -29,7 +29,7 @@ by the firm's information-security policy.
 
    | Name | Value |
    | --- | --- |
-   | `GITHUB_DELIVERY_ENABLED` | `false` during testing, then `true` |
+   | `DOTBO_DELIVERY_ENABLED` | `false` during testing, then `true` |
 
 4. Keep `AUTOMATION_ENABLED=false` until the end-to-end test has succeeded.
    Keep `PUBLISH_ENABLED=false`; this no-admin route does not use direct Graph
@@ -40,9 +40,9 @@ by the firm's information-security policy.
 1. In Actions, run **Monthly DoT collector** manually.
 2. Enter the test reporting month, select **Publish**, and leave the revision as
    `original`.
-3. With `GITHUB_DELIVERY_ENABLED=false`, confirm that the collection is successful
+3. With `DOTBO_DELIVERY_ENABLED=false`, confirm that the collection is successful
    and the summary says that release was skipped.
-4. Change `GITHUB_DELIVERY_ENABLED` to `true`.
+4. Change `DOTBO_DELIVERY_ENABLED` to `true`.
 5. Run the same validated test again. Confirm that `automation-output` now contains:
 
    ```text

@@ -39,7 +39,7 @@ jobs:
       TARGET_MONTH: ${{ inputs.month }}
       REVISION: ${{ inputs.revision || 'original' }}
       RELEASE_REQUESTED: ${{ github.event_name == 'schedule' || inputs.publish }}
-      GITHUB_DELIVERY_ENABLED: ${{ vars.GITHUB_DELIVERY_ENABLED }}
+      DOTBO_DELIVERY_ENABLED: ${{ vars.DOTBO_DELIVERY_ENABLED }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -68,14 +68,14 @@ jobs:
           retention-days: 14
           compression-level: 0
       - name: Check out private delivery branch
-        if: success() && env.RELEASE_REQUESTED == 'true' && env.GITHUB_DELIVERY_ENABLED == 'true'
+        if: success() && env.RELEASE_REQUESTED == 'true' && env.DOTBO_DELIVERY_ENABLED == 'true'
         uses: actions/checkout@v4
         with:
           ref: automation-output
           path: delivery-branch
           fetch-depth: 1
       - name: Release package for Power Automate
-        if: success() && env.RELEASE_REQUESTED == 'true' && env.GITHUB_DELIVERY_ENABLED == 'true'
+        if: success() && env.RELEASE_REQUESTED == 'true' && env.DOTBO_DELIVERY_ENABLED == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -111,10 +111,10 @@ jobs:
             git push origin automation-output
           fi
       - name: Explain skipped release
-        if: success() && env.RELEASE_REQUESTED == 'true' && env.GITHUB_DELIVERY_ENABLED != 'true'
+        if: success() && env.RELEASE_REQUESTED == 'true' && env.DOTBO_DELIVERY_ENABLED != 'true'
         shell: bash
         run: |
-          echo 'Package passed validation but was not released. Set GITHUB_DELIVERY_ENABLED=true only after Power Automate has been tested.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Package passed validation but was not released. Set DOTBO_DELIVERY_ENABLED=true only after Power Automate has been tested.' >> "$GITHUB_STEP_SUMMARY"
       - name: Show result in Actions
         if: always()
         shell: bash
